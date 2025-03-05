@@ -20,10 +20,10 @@ func TestMainHandlerWhenCountMoreThanTotal(t *testing.T) {
 	handler := http.HandlerFunc(mainHandle)
 	handler.ServeHTTP(responseRecorder, req)
 
-	itemList := strings.Split(responseRecorder.Body.String(), ",")
-
 	require.Equal(t, http.StatusOK, responseRecorder.Code, "expected 200 OK")
-	assert.Equal(t, totalCount, len(itemList), "expected 4 items")
+
+	itemList := strings.Split(responseRecorder.Body.String(), ",")
+	assert.Len(t, itemList, totalCount, "expected 4 items")
 }
 
 func TestMainHandlerWithCorrectParams(t *testing.T) {
@@ -34,7 +34,7 @@ func TestMainHandlerWithCorrectParams(t *testing.T) {
 	handler.ServeHTTP(responseRecorder, req)
 
 	require.Equal(t, http.StatusOK, responseRecorder.Code, "expected 200 OK")
-	assert.NotEmpty(t, responseRecorder.Body.String(), "expected not empty response")
+	assert.NotEmpty(t, responseRecorder.Body, "expected not empty response")
 }
 
 func TestMainHandlerWithWrongCity(t *testing.T) {
@@ -56,17 +56,19 @@ func TestMainHandlerWithoutCount(t *testing.T) {
 	handler := http.HandlerFunc(mainHandle)
 	handler.ServeHTTP(responseRecorder, req)
 
-	assert.Equal(t, http.StatusBadRequest, responseRecorder.Code, "expected 400 ERR")
+	require.Equal(t, http.StatusBadRequest, responseRecorder.Code, "expected 400 ERR")
+	assert.Equal(t, responseRecorder.Body.String(), "count missing", "expected other error message")
 }
 
 func TestMainHandlerWithoutIncorrectCount(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/?city=moscow/count=asd", nil)
+	req := httptest.NewRequest(http.MethodGet, "/?city=moscow&count=asd", nil)
 
 	responseRecorder := httptest.NewRecorder()
 	handler := http.HandlerFunc(mainHandle)
 	handler.ServeHTTP(responseRecorder, req)
 
-	assert.Equal(t, http.StatusBadRequest, responseRecorder.Code, "expected 400 ERR")
+	require.Equal(t, http.StatusBadRequest, responseRecorder.Code, "expected 400 ERR")
+	assert.Equal(t, responseRecorder.Body.String(), "wrong count value", "expected other error message")
 }
 
 func TestMainHandlerWithoutCity(t *testing.T) {
@@ -76,5 +78,6 @@ func TestMainHandlerWithoutCity(t *testing.T) {
 	handler := http.HandlerFunc(mainHandle)
 	handler.ServeHTTP(responseRecorder, req)
 
-	assert.Equal(t, http.StatusBadRequest, responseRecorder.Code, "expected 400 ERR")
+	require.Equal(t, http.StatusBadRequest, responseRecorder.Code, "expected 400 ERR")
+	assert.Equal(t, responseRecorder.Body.String(), "wrong city value", "expected other error message")
 }
